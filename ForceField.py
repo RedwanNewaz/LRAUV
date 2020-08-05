@@ -43,6 +43,7 @@ def plot_vector_field(ax, area, FF):
     for i in range(nx):
         for j in range(ny):
             r = [xv[i, j], yv[i, j]]
+            print ('r',r)
             F = FF(r)
             U[i, j] = F[0]
             V[i, j] = F[1]
@@ -54,6 +55,7 @@ def plot_vector_field(ax, area, FF):
 
     # showing obstacles and goal locations
     x, y = FF.goal
+    print(FF.goal)
     circle1 = plt.Circle((x, y), 2, color='g')
     ax.add_artist(circle1)
     for i , obs in enumerate(FF.obstacles):
