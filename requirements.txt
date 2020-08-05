@@ -1,6 +1,5 @@
 numpy
-scipy
-math
 matplotlib
 pynput
-sklearn
+scikit-learn
+

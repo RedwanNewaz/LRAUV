@@ -3,38 +3,21 @@ from math import *
 import matplotlib.pyplot as plt
 import scipy.io
 from mpl_toolkits.mplot3d import Axes3D
-from sklearn.preprocessing import MinMaxScaler
+
 
 #np.random.seed(88192019)
 #
 
 area = [-10, 30]
-# minimum distance between the robot and an obstacle
-rho_e = 1 # m
-# radius of the robot
-rho = 1 # m
-rhoF = 0.2
-
-def plot_flow_field(ax, area, goal, Fx,Fy):
-    # creating a meshgrid for the flow field
-    x, y = np.arange(area[0], area[1]), np.arange(area[0], area[1])
-    xv, yv = np.meshgrid(x, y, sparse=False, indexing='ij')
-    nx, ny = len(x), len(y)
-    scaler = MinMaxScaler()
-    scaler.fit(Fx)
-    U=scaler.transform(Fx)
-    V=scaler.transform(Fy)
-    #  showing vector field direction
-    Q = ax.quiver(xv, yv, U, V, units='width')
-    ax.quiverkey(Q,  X=1, Y=1, U=1, label=r'$2 \frac{m}{s}$', labelpos='E',
-                       coordinates='figure')
-
-    # showing obstacles and goal locations
-    x, y = goal
-    circle1 = plt.Circle((x, y), 2, color='g')
-    ax.add_artist(circle1)
+CELL_RESOLUTION = 1 #m
 
 
+def transform_to_cell_index(X, feature_range):
+    X_min, X_max = area
+    min_, max_ = feature_range
+    X_std = (X - X_min) / (X_max - X_min)
+    X_scaled = X_std * (max_ - min_) + min_
+    return int(X_scaled/CELL_RESOLUTION)
 
 class FlowField(object):
     def __init__(self):
@@ -53,14 +36,19 @@ class FlowField(object):
             self.Z = np.full(lonmesh.shape, L[k])
             self.U = np.zeros((lonmesh.shape))
             self.V = np.zeros((latmesh.shape))
-            for i in range(0, self.m):
-                for j in range(0,self.n):
-                    self.U[i][j] = UU[1][k][i][j];  ## index 1 represents the time, k represents the depth, i and j represent the longitude and latitude
-                    self.V[i][j] = VV[1][k][i][j];
+            for y in range(0, self.m):
+                for x in range(0,self.n):
+                    self.U[y][x] = UU[1][k][y][x]   ## index 1 represents the time, k represents the depth, i and j represent the longitude and latitude
+                    self.V[y][x] = VV[1][k][y][x]
+        # For debugging
+        # self.plot()
 
-        #fig = plt.figure()
-        #ax = fig.gca()
-        #ax.quiver(lonmesh, latmesh, self.U, self.V, units='width')
+    def plot(self):
+        fig = plt.figure()
+        ax = fig.gca()
+        x, y = np.arange(self.n), np.arange(self.m)
+        xv, yv = np.meshgrid(x, y, sparse=True, indexing='xy')
+        ax.quiver(xv, yv, self.U, self.V, units='width')
 
     def __call__(self, r):
         Fx= self.U[r[0]][r[1]]
@@ -69,7 +57,17 @@ class FlowField(object):
 
 
     def control_input(self, r):
-        x, y = self.goal[0] - r[0], self.goal[1] - r[1]
+        '''
+        :param r: robot coordinate in cartesian coordinate
+        Transform the cartesian coordinate to index coordinate
+        Compute angular velocity from force field
+        :return: external disturbance in velocities
+        '''
+        assert min(r)> area[0] and max(r)<area[1]
+        x, y = r
+        r[0] = transform_to_cell_index(r[0], (0,self.n))
+        r[1] = transform_to_cell_index(r[1], (0, self.m))
+        print(r, (self.m, self.n))
         Fx, Fy = self(r)
         phi = atan2(Fy, Fx)
         u = tanh(x**2 + y**2)
@@ -77,11 +75,9 @@ class FlowField(object):
 
 if __name__ == '__main__':
     FF = FlowField()
-    fig, ax = plt.subplots()
-    ax = plt.gca()
-    ax.cla()  # clear things for fresh plot
-    # ax1.set_title('Arrows scale with plot width, not view')
-    plot_flow_field(ax,  area, FF.goal, FF.U, FF.V)
+    r = [2, 29]
+    print(FF.control_input(r))
+    FF.plot()
 
     plt.axis('equal')
     plt.show()
