@@ -4,7 +4,9 @@ from queue import Queue
 import os
 from matplotlib import cbook, patches
 import matplotlib.transforms as mtransforms
-from ForceField import plot_vector_field, ForceField
+#from ForceField import plot_vector_field, ForceField
+from FlowField import FlowField
+
 class SimView(object):
     q = Queue()
     def __init__(self, plt, FF = None):
@@ -38,10 +40,10 @@ class SimView(object):
         # plot dummy vehicle image
         x, y, theta= self.xEst[0, 0], self.xEst[1, 0], self.xEst[2, 0]
         self.plot_vehicle(x, y, theta)
-
+        self.FF.plot(self.ax)
         # plot vector field
-        if (isinstance(self.FF, ForceField)):
-            plot_vector_field(self.ax, [-10, 30], self.FF)
+        #if (isinstance(self.FF, ForceField)):
+        #    plot_vector_field(self.ax, [-10, 30], self.FF)
         # plot information
         self.plt.title("V = {}, Yaw = {}".format(v, yawrate))
         self.plt.axis([-10, 30, -10, 30])

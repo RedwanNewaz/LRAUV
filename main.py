@@ -5,7 +5,8 @@ from env import TethysEnv
 from SimView import SimView
 import matplotlib.pyplot as plt
 from time import sleep
-from ForceField import sampling_locations, ForceField
+#from ForceField import sampling_locations, ForceField
+from FlowField import FlowField
 
 class KeyboardInput(Thread):
     def __init__(self, env):
@@ -37,11 +38,11 @@ if __name__ == '__main__':
     print('LRAUV project')
 
     # showing vector field
-    num_obstacles = 3
-    samples = sampling_locations(num_samples=num_obstacles + 1, sample_dist=15)
-    obstacles, goal = samples[:num_obstacles], samples[num_obstacles]
-    FF = ForceField(goal.tolist(), obstacles)
-
+    #num_obstacles = 3
+    #samples = sampling_locations(num_samples=num_obstacles + 1, sample_dist=15)
+    #obstacles, goal = samples[:num_obstacles], samples[num_obstacles]
+    #FF = ForceField(goal.tolist(), obstacles)
+    FF = FlowField()
 
     sim = SimView(plt, FF)
     tethys = TethysEnv(sim, FF)

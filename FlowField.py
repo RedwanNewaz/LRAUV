@@ -43,9 +43,9 @@ class FlowField(object):
         # For debugging
         # self.plot()
 
-    def plot(self):
-        fig = plt.figure()
-        ax = fig.gca()
+    def plot(self, ax):
+
+
         x, y = np.arange(self.n), np.arange(self.m)
         xv, yv = np.meshgrid(x, y, sparse=True, indexing='xy')
         ax.quiver(xv, yv, self.U, self.V, units='width')
@@ -77,7 +77,9 @@ if __name__ == '__main__':
     FF = FlowField()
     r = [2, 29]
     print(FF.control_input(r))
-    FF.plot()
+    fig = plt.figure()
+    ax = fig.gca()
+    FF.plot(ax)
 
     plt.axis('equal')
     plt.show()
