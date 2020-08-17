@@ -1,17 +1,16 @@
 from queue import Queue
-from time import sleep
 import numpy as np
 from threading import Thread
-from ekf import observation, ekf_estimation
+from Model.ekf import observation, ekf_estimation
 from time import sleep
-from FlowField import FlowField
+from Model.FlowField import FlowField
+from Env import robot_in_area
 #from ForceField import ForceField
 
 # plt.gcf().canvas.mpl_connect('key_release_event',
 #                              lambda event: [exit(0) if event.key == 'escape' else None])
 V_MAX = 5
 YAW_MAX = 2
-area =[29,0,20,0]
 class TethysEnv(Thread):
     values = ["Key.up", "Key.down", "Key.left", "Key.right", "w", "s"]
     terminate = False
@@ -30,16 +29,12 @@ class TethysEnv(Thread):
         self.u = np.zeros((2, 1))
         self.PEst = np.eye(4)
         self.xDR = np.zeros((4, 1))  # Dead reckoning
-    def point_in_area(self, p, area):
-        xmax,xmin,ymax,ymin=area
-        if (p[0]<xmax and p[0]>=xmin) and (p[1]<ymax and p[1]>=ymin):
-            return True
-        return False
+
 
 
     def update(self):
         self.xTrue, z, self.xDR, ud = observation(self.xTrue, self.xDR, self.u)
-        if( isinstance(self.FF, FlowField)):
+        if( isinstance(self.FF, FlowField) ):
             r = [self.xEst[0, 0], self.xEst[1, 0]]
 
             u, phi = self.FF.control_input(r)
@@ -55,9 +50,9 @@ class TethysEnv(Thread):
             # self.yawrate = self.fixInput(self.yawrate, YAW_MAX)
             # self.u = np.array([[self.v], [self.yawrate]])
 
-        xEst, PEst = ekf_estimation(self.xEst, self.PEst, z, ud )
-        if self.point_in_area(xEst, area):
-            self.xEst, self.PEst = xEst, PEst
+
+        self.xEst, self.Est = ekf_estimation(self.xEst, self.PEst, z, ud )
+
 
     def fixInput(self, u, u_max):
         sign = u/abs(u) if abs(u)>0 else 0

@@ -1,12 +1,11 @@
-import numpy as np
 from threading import Thread
 from pynput.keyboard import Key, Listener
-from env import TethysEnv
-from SimView import SimView
+from Env.env import TethysEnv
+from Env.SimView import SimView
 import matplotlib.pyplot as plt
 from time import sleep
 #from ForceField import sampling_locations, ForceField
-from FlowField import FlowField
+from Model.FlowField import FlowField
 
 class KeyboardInput(Thread):
     def __init__(self, env):

@@ -121,10 +121,11 @@ if __name__ == '__main__':
     node = str(sub2ind(s[0], s[1])) # name
     tree.create_node(node, node,  data=sar(s))
     search(X, Y, s, tree, node)
-    # for _ in range(10):
-    #     search(X, Y, s, tree, node)
-    # tree.show()
-    plt.plot(X, Y)
+    for _ in range(10):
+        search(X, Y, s, tree, node)
+    tree.show()
+    plt.plot(goal[0], goal[1],'^')
+    plt.plot(X, Y,'*')
     plt.show()
 
 

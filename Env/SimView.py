@@ -1,11 +1,10 @@
-from ekf import plot_covariance_ellipse
+from Model.ekf import plot_covariance_ellipse
 import numpy as np
 from queue import Queue
-import os
-from matplotlib import cbook, patches
+from Env import img_path, target_area
+from matplotlib import cbook
 import matplotlib.transforms as mtransforms
-#from ForceField import plot_vector_field, ForceField
-from FlowField import FlowField
+
 
 class SimView(object):
     q = Queue()
@@ -16,7 +15,7 @@ class SimView(object):
         self.PEst = np.eye(4)
         self.hxEst = self.xEst
         self.u = np.zeros((2, 1))
-        img_path = os.path.join(os.getcwd(),'icon/model3.png')
+
         with cbook.get_sample_data(img_path) as image_file:
             self.image = self.plt.imread(image_file)
 
@@ -46,7 +45,7 @@ class SimView(object):
         #    plot_vector_field(self.ax, [-10, 30], self.FF)
         # plot information
         self.plt.title("V = {}, Yaw = {}".format(v, yawrate))
-        self.plt.axis([-10, 30, -10, 30])
+        self.plt.axis(target_area)
         self.plt.grid(True)
         self.plt.pause(0.01)
 

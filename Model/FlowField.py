@@ -2,31 +2,20 @@ import numpy as np
 from math import *
 import matplotlib.pyplot as plt
 import scipy.io
+from Env import target_area, robot_in_area
+from Model import data_path
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.preprocessing import MinMaxScaler
 
-
-#np.random.seed(88192019)
-#
-
-area = [-10, 30]
-CELL_RESOLUTION = 1 #m
-
-
-def transform_to_cell_index(X, feature_range):
-    X_min, X_max = area
-    min_, max_ = feature_range
-    X_std = (X - X_min) / (X_max - X_min)
-    X_scaled = X_std * (max_ - min_) + min_
-    return int(X_scaled/CELL_RESOLUTION)
 
 class FlowField(object):
     def __init__(self):
         ##extracting ROMS flow field data
-        mat = scipy.io.loadmat('data/UUVV711b.mat')
+        mat = scipy.io.loadmat(data_path)
         lonmesh = mat['lonmesh']
         latmesh = mat['latmesh']
         Z = np.zeros((lonmesh.shape))
-        self.m, self.n = lonmesh.shape  ## m and n represents the size of lonmesh and latmesh matrices
+        self.set_scaler(lonmesh)
         L = mat['Depth']
         UU = mat['UU']
         VV = mat['VV']
@@ -42,11 +31,23 @@ class FlowField(object):
                     self.V[y][x] = VV[1][k][y][x]
         # For debugging
         # self.plot()
+    def set_scaler(self, lonmensh):
+        self.m, self.n = lonmensh.shape
+        bounding_box = [
+            [target_area[0], target_area[2]],
+            [self.n + target_area[0], self.m + target_area[2]]
+        ]
+        self.scaler = MinMaxScaler()
+        self.scaler.fit(bounding_box)
+        self.xyScale = np.array([self.n + target_area[0], self.m + target_area[2]])
+    def transform(self, r):
+        x = np.array([r])
+        x = self.scaler.transform(x)
+        x *= self.xyScale
+        return list(map(int, x[0]))
 
     def plot(self, ax):
-
-
-        x, y = np.arange(self.n), np.arange(self.m)
+        x, y = np.arange(self.n) + target_area[0], np.arange(self.m) + target_area[2] # (x_min, y_min)
         xv, yv = np.meshgrid(x, y, sparse=True, indexing='xy')
         ax.quiver(xv, yv, self.U, self.V, units='width')
 
@@ -63,11 +64,9 @@ class FlowField(object):
         Compute angular velocity from force field
         :return: external disturbance in velocities
         '''
-        assert min(r)> area[0] and max(r)<area[1]
+        assert min(r)> target_area[0] and max(r)<target_area[1]
         x, y = r
-        r[0] = transform_to_cell_index(r[0], (0,self.n))
-        r[1] = transform_to_cell_index(r[1], (0, self.m))
-        print(r, (self.m, self.n))
+        r = self.transform(r)
         Fx, Fy = self(r)
         phi = atan2(Fy, Fx)
         u = tanh(x**2 + y**2)
@@ -75,7 +74,7 @@ class FlowField(object):
 
 if __name__ == '__main__':
     FF = FlowField()
-    r = [2, 29]
+    r = [-9, 29]
     print(FF.control_input(r))
     fig = plt.figure()
     ax = fig.gca()
