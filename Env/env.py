@@ -5,7 +5,7 @@ from Model.ekf import observation, ekf_estimation
 from time import sleep
 from Model.FlowField import FlowField
 from Env import robot_in_area
-#from ForceField import ForceField
+
 
 # plt.gcf().canvas.mpl_connect('key_release_event',
 #                              lambda event: [exit(0) if event.key == 'escape' else None])
@@ -52,6 +52,8 @@ class TethysEnv(Thread):
 
 
         self.xEst, self.Est = ekf_estimation(self.xEst, self.PEst, z, ud )
+
+
 
 
     def fixInput(self, u, u_max):

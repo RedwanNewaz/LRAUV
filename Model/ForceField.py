@@ -1,7 +1,8 @@
 import numpy as np
 from math import *
 import matplotlib.pyplot as plt
-
+from Env import target_area
+from Model.DynamicObstacles import random_particles, Obstacles,NUM_OBSTACLES, OBSTACLE_RADIUS
 '''
 This is the implementation of 
 Motion Planning and Collision Avoidance using Navigation Vector Fields
@@ -12,17 +13,17 @@ http://publish.illinois.edu/dpanagou/files/2014/07/Panagou_ICRA_14.pdf
 np.random.seed(88192019)
 #
 
-area = [-10, 30]
+
 # minimum distance between the robot and an obstacle
-rho_e = 1 # m
+rho_e = 0.5 # m
 # radius of the robot
-rho = 1 # m
-rhoF = 0.2
+rho = 0.5 # m
+rhoF = 0.1
 
 def sampling_locations(num_samples, sample_dist = 15):
     samples = []
     for i in range(100):
-        obs = np.random.uniform(area[0], area[1], size=(1,2))
+        obs = np.random.uniform(target_area[0], target_area[1], size=(1,2))
         if(len(samples)<1):
             samples.append(obs)
         else:
@@ -43,7 +44,7 @@ def plot_vector_field(ax, area, FF):
     for i in range(nx):
         for j in range(ny):
             r = [xv[i, j], yv[i, j]]
-            print ('r',r)
+            # print ('r',r)
             F = FF(r)
             U[i, j] = F[0]
             V[i, j] = F[1]
@@ -55,14 +56,14 @@ def plot_vector_field(ax, area, FF):
 
     # showing obstacles and goal locations
     x, y = FF.goal
-    print(FF.goal)
-    circle1 = plt.Circle((x, y), 2, color='g')
+    # print(FF.goal)
+    circle1 = plt.Circle((x, y), 0.5, color='g')
     ax.add_artist(circle1)
-    for i , obs in enumerate(FF.obstacles):
-        x, y  = obs
-        r = FF.obstacle_radius[i]
-        circle1 = plt.Circle((x, y), r, color='r')
-        ax.add_artist(circle1)
+    # for i , obs in enumerate(FF.obstacles):
+    #     x, y  = obs
+    #     r = OBSTACLE_RADIUS
+    #     circle1 = plt.Circle((x, y), r, color='r')
+    #     ax.add_artist(circle1)
 
 class ForceField(object):
     def __init__(self, goal, obstacles = []):
@@ -70,8 +71,8 @@ class ForceField(object):
         assert len(goal) == 2
         self.goal = goal
         self.obstacles = obstacles
-        self.obstacle_radius = np.random.randint(2, 4, size=len(obstacles))
-        self.rho_z = [rho_oi + rho_e + rho for rho_oi in self.obstacle_radius]
+        self.obstacle_radius = OBSTACLE_RADIUS
+        self.rho_z = [OBSTACLE_RADIUS + rho_e + rho for _ in range(len(obstacles))]
     @staticmethod
     def attractive_force_field(r, p):
         assert isinstance(r, list)
@@ -121,7 +122,7 @@ class ForceField(object):
         x, y = r
         for i, obs in enumerate(obstacles):
             xoi, yoi = obs
-            rho_oi = self.obstacle_radius[i]
+            rho_oi = OBSTACLE_RADIUS
             beta_i = rho_oi ** 2 - (x - xoi) ** 2 - (y - yoi) ** 2
             # beta_iz = -2*rho_oi * (rho + rho_e) - (rho + rho_e)**2
             beta_iz = -2 * rho_oi * (self.rho_z[i] - rho_oi) - (self.rho_z[i] - rho_oi) ** 2
@@ -150,22 +151,39 @@ class ForceField(object):
 
 
 if __name__ == '__main__':
-    num_obstacles = 3
-    samples = sampling_locations(num_samples=num_obstacles+1, sample_dist = 15)
-    obstacles, goal = samples[:num_obstacles], samples[num_obstacles]
-    print('obstacles')
-    print(samples)
-    print('goal')
-    print(goal)
 
-    FF = ForceField(goal.tolist())
-
+    obstacles = []
+    for _ in range(NUM_OBSTACLES + 1):
+        random_particles(OBSTACLE_RADIUS, obstacles)
+    goal = obstacles[0]
 
     fig, ax = plt.subplots()
-    ax = plt.gca()
-    ax.cla()  # clear things for fresh plot
-    # ax1.set_title('Arrows scale with plot width, not view')
-    plot_vector_field(ax, area, FF)
+    disturbance = [Obstacles(p) for p in obstacles]
+    while True:
+        ax.cla()
+        FF = ForceField(list(goal), obstacles[1:])
+        plot_vector_field(ax, target_area, FF)
+        for i, obj in enumerate(disturbance):
+            if i == 0:
+                goal = [obj.x, obj.y]
+                obj.update(disturbance)
+            else:
+                obstacles[i] = [obj.x, obj.y]
+                ax.add_patch(obj.update(disturbance))
 
-    plt.axis('equal')
-    plt.show()
+        plt.axis(target_area)
+        plt.pause(0.1)
+        goal = obstacles[-1]
+
+
+
+
+    # FF = ForceField(list(goal), obstacles)
+    # fig, ax = plt.subplots()
+    # ax = plt.gca()
+    # ax.cla()  # clear things for fresh plot
+    # # ax1.set_title('Arrows scale with plot width, not view')
+    # plot_vector_field(ax, target_area, FF)
+    #
+    # plt.axis(target_area)
+    # plt.show()

@@ -6,6 +6,7 @@ from Env import target_area, robot_in_area
 from Model import data_path
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.preprocessing import MinMaxScaler
+from Model.DynamicObstacles import Obstacles, NUM_OBSTACLES, random_particles, OBSTACLE_RADIUS
 
 
 class FlowField(object):
@@ -31,6 +32,12 @@ class FlowField(object):
                     self.V[y][x] = VV[1][k][y][x]
         # For debugging
         # self.plot()
+        # dynamic obstacle
+        particles = []
+        for _ in range(NUM_OBSTACLES):
+            random_particles(OBSTACLE_RADIUS, particles)
+        self.obstacles = [Obstacles(p) for p in particles]
+
     def set_scaler(self, lonmensh):
         self.m, self.n = lonmensh.shape
         bounding_box = [
@@ -46,10 +53,17 @@ class FlowField(object):
         x *= self.xyScale
         return list(map(int, x[0]))
 
-    def plot(self, ax):
+    def plot(self, ax, robot):
         x, y = np.arange(self.n) + target_area[0], np.arange(self.m) + target_area[2] # (x_min, y_min)
         xv, yv = np.meshgrid(x, y, sparse=True, indexing='xy')
         ax.quiver(xv, yv, self.U, self.V, units='width')
+        for i, obj in enumerate(self.obstacles):
+            if i == 0:
+                self.obstacles[i].x = robot[0]
+                self.obstacles[i].y = robot[1]
+                obj.update(self.obstacles)
+            else:
+                ax.add_patch(obj.update(self.obstacles))
 
     def __call__(self, r):
         Fx= self.U[r[0]][r[1]]

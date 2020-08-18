@@ -39,7 +39,7 @@ class SimView(object):
         # plot dummy vehicle image
         x, y, theta= self.xEst[0, 0], self.xEst[1, 0], self.xEst[2, 0]
         self.plot_vehicle(x, y, theta)
-        self.FF.plot(self.ax)
+        self.FF.plot(self.ax, (x, y))
         # plot vector field
         #if (isinstance(self.FF, ForceField)):
         #    plot_vector_field(self.ax, [-10, 30], self.FF)
