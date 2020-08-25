@@ -1,8 +1,10 @@
 from ActionSet import Action, get_psuedo_goal
 import numpy as np
 from numpy.linalg import norm
-from AUVEnv import StateEstimator, point_in_area, goal
+from AUVEnv import  point_in_area, goal
 from copy import deepcopy
+
+from AUVEnv import StateEstimator
 
 
 
@@ -19,7 +21,7 @@ class Simulator(object):
         return self
 
     def __repr__(self):
-        return "x = {:.3f} y = {:.3f}".format(self.pos[0], self.pos[1])
+        return "x = {:.3f} y = {:.3f} | gt {}".format(self.pos[0], self.pos[1], goal.tolist())
 
     def getPossibleActions(self):
         possibleActions = [Action(k) for k in self.state.actions]

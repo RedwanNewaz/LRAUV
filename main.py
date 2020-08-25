@@ -37,7 +37,7 @@ def main(initialState):
 def show_tree(mcts):
     def DFS(node, action = None):
         if not node: return
-        print(node.state, action)
+        print("> state ({}) | action ({}) | reward ({:.3f})".format(node.state, action, node.totalReward))
         for action, child in node.children.items():
             DFS(child, action)
 
@@ -51,7 +51,7 @@ def show_tree(mcts):
                 if child:
                     q.put(child)
 
-    return BFS(mcts.root)
+    return DFS(mcts.root)
 
 
 if __name__ == '__main__':
